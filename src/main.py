@@ -1,8 +1,8 @@
-# Entry point for garment defect detection API
-# FastAPI application will be initialized here
+from fastapi import FastAPI
 
-def analyze_image():
-    pass
+app = FastAPI()
 
-if __name__ == "__main__":
-    analyze_image()
+
+@app.get("/")
+def root():
+    return {"message": "Garment Defect Detection API is running"}
