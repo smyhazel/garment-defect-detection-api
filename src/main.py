@@ -11,3 +11,8 @@ def root():
 @app.get("/health", tags=["system"], summary="Health check")
 def health_check():
     return {"status": "ok"}
+
+
+@app.post("/detect-test", tags=["system"], summary="detect test")
+def detect_test():
+    return {"message": "detect endpoint reached"}
