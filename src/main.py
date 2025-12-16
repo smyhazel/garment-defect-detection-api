@@ -1,12 +1,13 @@
 from fastapi import FastAPI
 
-app = FastAPI()
+app = FastAPI(title="Garment Defect Detection API", version="0.1.0")
 
 
-@app.get("/")
+@app.get("/", tags=["system"], summary="Root")
 def root():
     return {"message": "Garment Defect Detection API is running"}
 
-@app.get("/health")
+
+@app.get("/health", tags=["system"], summary="Health check")
 def health_check():
     return {"status": "ok"}
