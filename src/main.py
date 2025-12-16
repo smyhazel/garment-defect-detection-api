@@ -6,3 +6,7 @@ app = FastAPI()
 @app.get("/")
 def root():
     return {"message": "Garment Defect Detection API is running"}
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
