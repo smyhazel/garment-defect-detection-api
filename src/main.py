@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from fastapi import File, UploadFile
+from fastapi import HTTPException
 
 app = FastAPI(title="Garment Defect Detection API", version="0.1.0")
 
@@ -14,5 +16,11 @@ def health_check():
 
 
 @app.post("/detect-test", tags=["system"], summary="detect test")
-def detect_test():
-    return {"message": "detect endpoint reached"}
+async def detect_test(file: UploadFile = File(...)):
+    if file.content_type.startswith("image/"):
+        content = await file.read()
+        return{"file_name" : file.filename,
+                        "content_type" : file.content_type,
+                        "size" : len(content)}
+    else:
+        raise HTTPException(status_code=400, detail="Only image files are allowed")
