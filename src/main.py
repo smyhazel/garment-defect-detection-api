@@ -21,25 +21,34 @@ def is_grayscale(img):
         return True
     else:
         return False
+    
+def decode_image(content):
+    np_arr = np.frombuffer(content, np.uint8)
+    img = cv2.imdecode(np_arr, cv2.IMREAD_UNCHANGED)
+    if img is None:
+        raise HTTPException(status_code=400, detail="Could not decode image")
+    else:
+        return img
+    
+def extract_image_metadata(img):
+    h, w = img.shape[:2]
+    channels = 1 if len(img.shape) == 2 else img.shape[2] 
+    is_gray = is_grayscale(img)
+    return {"width" : w,
+            "height" : h,
+            "channels" : channels,
+            "is_grayscale": is_gray} 
 
 @app.post("/detect-test", tags=["system"], summary="detect test")
 async def detect_test(file: UploadFile = File(...)):
     if file.content_type.startswith("image/"):
         content = await file.read()
-        np_arr = np.frombuffer(content, np.uint8)
-        img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-        if img is None:
-            raise HTTPException(status_code=400, detail="Could not decode image")
-        h, w = img.shape[:2]
-        channels = 1 if len(img.shape) == 2 else img.shape[2] 
-        is_gray = is_grayscale(img) 
+        img = decode_image(content)
+        metadata = extract_image_metadata(img)
         return {"file_name" : file.filename,
                 "content_type" : file.content_type,
                 "size" : len(content),
-                "width" : w,
-                "height" : h,
-                "channels" : channels,
-                "is_grayscale": is_gray
+                **metadata
                 }
     else:
         raise HTTPException(status_code=400, detail="Only image files are allowed")
