@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi import File, UploadFile
 from fastapi import HTTPException
+import cv2
+import numpy as np
 
 app = FastAPI(title="Garment Defect Detection API", version="0.1.0")
 
@@ -14,13 +16,34 @@ def root():
 def health_check():
     return {"status": "ok"}
 
+def is_grayscale(img):
+    if (len(img.shape) == 2) or (len(img.shape) == 3 and img.shape[2] == 1):
+        return True
+    else:
+        return False
 
 @app.post("/detect-test", tags=["system"], summary="detect test")
 async def detect_test(file: UploadFile = File(...)):
     if file.content_type.startswith("image/"):
         content = await file.read()
-        return{"file_name" : file.filename,
-                        "content_type" : file.content_type,
-                        "size" : len(content)}
+        np_arr = np.frombuffer(content, np.uint8)
+        img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+        if img is None:
+            raise HTTPException(status_code=400, detail="Could not decode image")
+        h, w = img.shape[:2]
+        channels = 1 if len(img.shape) == 2 else img.shape[2] 
+        is_gray = is_grayscale(img) 
+        return {"file_name" : file.filename,
+                "content_type" : file.content_type,
+                "size" : len(content),
+                "width" : w,
+                "height" : h,
+                "channels" : channels,
+                "is_grayscale": is_gray
+                }
     else:
         raise HTTPException(status_code=400, detail="Only image files are allowed")
+
+@app.post("/detect", tags=["inference"], summary="detect")
+def detect():
+    raise HTTPException(status_code=501, detail="Not implemented yet")
