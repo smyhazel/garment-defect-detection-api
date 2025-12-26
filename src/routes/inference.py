@@ -12,7 +12,7 @@ from src.utils.scoring import compute_edge_score
 router = APIRouter(prefix="", tags=["inference"])
 
 @router.post("/detect", summary="detect")
-async def detect(file: UploadFile = File(...)):
+async def detect(threshold : float = 0.8, file: UploadFile = File(...)):
     validate_upload(file)
     content = await file.read()
     img = decode_image(content)
@@ -22,11 +22,14 @@ async def detect(file: UploadFile = File(...)):
         gray_image = cv2.cvtColor(img, cv2.COLOR_BGRA2GRAY)
     else:
         gray_image = img
+    if threshold <= 0 or threshold >= 1:
+         raise HTTPException(status_code=422, detail="The threshold value should be between 0 and 1")
+      
     score = compute_edge_score(gray_image)
-    threshold = 0.08
     meta = extract_image_metadata(img)
     return {"file_name" : file.filename,
             "defect_score" : float(score),
             **decide(score, threshold),
-            **meta
+            **meta,
+            "threshold_used": threshold
     }
