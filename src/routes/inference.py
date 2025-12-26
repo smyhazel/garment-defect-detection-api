@@ -5,8 +5,9 @@ import numpy as np
 from fastapi import File, UploadFile
 from src.utils.validation import validate_upload
 from src.utils.decode import decode_image
-from src.utils.grayscale import is_grayscale
 from src.utils.metadata import extract_image_metadata
+from src.utils.decision import decide
+from src.utils.scoring import compute_edge_score
 
 router = APIRouter(prefix="", tags=["inference"])
 
@@ -21,15 +22,11 @@ async def detect(file: UploadFile = File(...)):
         gray_image = cv2.cvtColor(img, cv2.COLOR_BGRA2GRAY)
     else:
         gray_image = img
-    edge = cv2.Canny(gray_image,100,200)
-    total_pixels = gray_image.size
-    edge_pixels = np.sum(edge != 0)
-    score = edge_pixels/total_pixels
+    score = compute_edge_score(gray_image)
     threshold = 0.08
     meta = extract_image_metadata(img)
     return {"file_name" : file.filename,
             "defect_score" : float(score),
-            "defect_detected" : bool(score > threshold),
+            **decide(score, threshold),
             **meta
     }
-
